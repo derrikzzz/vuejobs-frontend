@@ -15,6 +15,7 @@
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.1.0",
     "json-server": "^1.0.0-beta.3",
     "lucide-vue-next": "^0.539.0",
     "pinia": "^3.0.3",
