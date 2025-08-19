@@ -104,7 +104,7 @@ const handleGoogleSignup = async () => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4">
     <div class="flex flex-col items-center justify-center min-h-screen">
       <!-- Firebase Test Component (temporary for debugging) -->
       <div class="mb-8 w-full max-w-md">

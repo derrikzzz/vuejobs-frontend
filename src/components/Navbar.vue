@@ -1,17 +1,18 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import logo from "@/assets/img/logo.png";
-import { RouterLink, useRoute } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useToast } from "vue-toastification";
 
+const router = useRouter();
+const toast = useToast();
 const route = useRoute();
 const authStore = useAuthStore();
 const showUserMenu = ref(false);
+const menuRef = ref(null);
 
-const isActiveLink = (routePath) => {
-  return route.path === routePath;
-};
-
+const isActiveLink = (p) => route.path === p;
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const currentUser = computed(() => authStore.currentUser);
 
@@ -19,6 +20,34 @@ const handleLogout = async () => {
   await authStore.logout();
   showUserMenu.value = false;
 };
+
+const handleProtectedRouteClick = (routePath, event) => {
+  if (!isAuthenticated.value) {
+    event.preventDefault();
+    toast.error("Please login to access this page");
+    router.push(`/login?redirect=${encodeURIComponent(routePath)}`);
+    return false;
+  }
+  return true;
+};
+
+const onDocClick = (e) => {
+  if (menuRef.value && !menuRef.value.contains(e.target)) {
+    showUserMenu.value = false;
+  }
+};
+const onDocKey = (e) => {
+  if (e.key === "Escape") showUserMenu.value = false;
+};
+
+onMounted(() => {
+  document.addEventListener("click", onDocClick);
+  document.addEventListener("keydown", onDocKey);
+});
+onBeforeUnmount(() => {
+  document.removeEventListener("click", onDocClick);
+  document.removeEventListener("keydown", onDocKey);
+});
 </script>
 
 <template>
@@ -39,6 +68,7 @@ const handleLogout = async () => {
             <div class="flex items-center space-x-2">
               <RouterLink
                 to="/"
+                @click="handleProtectedRouteClick('/', $event)"
                 :class="[
                   isActiveLink('/') ? 'bg-green-900' : 'hover:bg-gray-900',
                   'text-white',
@@ -50,6 +80,7 @@ const handleLogout = async () => {
               >
               <RouterLink
                 to="/jobs"
+                @click="handleProtectedRouteClick('/jobs', $event)"
                 :class="[
                   isActiveLink('/jobs') ? 'bg-green-900' : 'hover:bg-gray-900',
                   'text-white',
@@ -61,6 +92,7 @@ const handleLogout = async () => {
               >
               <RouterLink
                 to="/review-resume"
+                @click="handleProtectedRouteClick('/review-resume', $event)"
                 :class="[
                   isActiveLink('/review-resume')
                     ? 'bg-green-900'
@@ -77,6 +109,7 @@ const handleLogout = async () => {
               <template v-if="isAuthenticated">
                 <RouterLink
                   to="/jobs/add"
+                  @click="handleProtectedRouteClick('/jobs/add', $event)"
                   :class="[
                     isActiveLink('/jobs/add')
                       ? 'bg-green-900'
@@ -90,10 +123,9 @@ const handleLogout = async () => {
                 >
 
                 <!-- User Dropdown -->
-                <div class="relative">
+                <div class="relative" ref="menuRef">
                   <button
-                    @click="showUserMenu = !showUserMenu"
-                    @blur="setTimeout(() => (showUserMenu = false), 150)"
+                    @click.stop="showUserMenu = !showUserMenu"
                     class="flex items-center space-x-2 text-white hover:bg-gray-900 px-3 py-2 rounded-md"
                   >
                     <div
@@ -128,6 +160,7 @@ const handleLogout = async () => {
                   <div
                     v-if="showUserMenu"
                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
+                    @click.stop
                   >
                     <RouterLink
                       to="/profile"
