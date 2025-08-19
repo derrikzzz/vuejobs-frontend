@@ -10,9 +10,16 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "server": "json-server --watch src/jobs.json --port 8000"
+    "server": "json-server --watch src/jobs.json --port 8000",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
   },
   "dependencies": {
+    "@capacitor/cli": "^7.4.2",
+    "@capacitor/core": "^7.4.2",
+    "@capacitor/ios": "^7.4.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^12.1.0",
@@ -27,14 +34,22 @@
     "vue-router": "^4.5.1",
     "vue-spinner": "^1.0.4",
     "vue-spinners": "^1.0.2",
-    "vue-toastification": "^2.0.0-rc.5"
+    "vue-toastification": "^2.0.0-rc.5",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vitest/ui": "^1.0.0",
+    "@vue/test-utils": "^2.4.0",
     "autoprefixer": "^10.4.21",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.17.0",
     "postcss": "^8.5.6",
+    "prettier": "^3.0.0",
     "tailwindcss": "^3.4.17",
     "vite": "npm:rolldown-vite@latest",
-    "vite-plugin-vue-devtools": "^8.0.0"
+    "vite-plugin-node-polyfills": "^0.24.0",
+    "vite-plugin-vue-devtools": "^8.0.0",
+    "vitest": "^1.0.0"
   }
 }

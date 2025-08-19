@@ -53,7 +53,12 @@ export default {
   			],
   			mono: [
   				'monospace'
-  			]
+  			],
+				serif: [
+					'Merriweather',
+					'serif',
+					'Georgia',
+				]
   		},
   		gridTemplateColumns: {
   			'70/30': '70% 28%'
