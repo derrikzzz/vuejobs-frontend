@@ -1,0 +1,25 @@
+{
+  "name": "vuejobs-chat-server",
+  "version": "1.0.0",
+  "description": "WebSocket-based job recommendation chat server",
+  "type": "module",
+  "main": "chatServer.js",
+  "scripts": {
+    "start": "node chatServer.js",
+    "dev": "node --watch chatServer.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "websocket",
+    "chat",
+    "job-recommendations",
+    "vue",
+    "nodejs"
+  ],
+  "author": "VueJobs Team",
+  "license": "MIT"
+}
