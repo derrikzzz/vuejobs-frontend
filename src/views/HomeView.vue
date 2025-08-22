@@ -2,6 +2,7 @@
 import Hero from "@/components/Hero.vue";
 import HomeCards from "@/components/HomeCards.vue";
 import JobCarouselSwiper from "@/components/JobCarouselSwiper.vue";
+import FAQAccordian from "@/views/FAQAccordian.vue";
 </script>
 
 <template>
@@ -16,4 +17,5 @@ import JobCarouselSwiper from "@/components/JobCarouselSwiper.vue";
     :autoPlay="true"
     :autoPlayInterval="3000"
   />
+  <FAQAccordian />
 </template>
