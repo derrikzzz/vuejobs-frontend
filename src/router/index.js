@@ -10,6 +10,7 @@ import LoginView from "@/views/LoginView.vue";
 import SignupView from "@/views/SignupView.vue";
 import ProfileView from "@/views/ProfileView.vue";
 import ReviewResumeView from "@/views/ReviewResume.vue";
+import UnauthorizedView from "@/views/UnauthorizedView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -48,7 +49,10 @@ const router = createRouter({
       path: "/jobs/add",
       name: "add-job",
       component: AddJobView,
-      meta: { requiresAuth: true },
+      meta: {
+        requiresAuth: true,
+        requiresRole: ["admin", "recruiter", "employer"],
+      },
     },
     {
       path: "/jobs/edit/:id",
@@ -67,6 +71,11 @@ const router = createRouter({
       name: "profile",
       component: ProfileView,
       meta: { requiresAuth: true },
+    },
+    {
+      path: "/unauthorized",
+      name: "unauthorized",
+      component: UnauthorizedView,
     },
     {
       path: "/:catchAll(.*)*",
@@ -108,6 +117,15 @@ router.beforeEach(async (to, from, next) => {
       query: { message: "Please verify your email address" },
     });
     return;
+  }
+
+  // Check if route requires specific roles
+  if (to.meta.requiresRole) {
+    const userRole = authStore.currentUser?.role;
+    if (!userRole || !to.meta.requiresRole.includes(userRole)) {
+      next({ name: "unauthorized" });
+      return;
+    }
   }
 
   next();

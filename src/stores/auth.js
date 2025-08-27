@@ -174,5 +174,19 @@ export const useAuthStore = defineStore("auth", {
     isAuthenticated: (state) => !!state.user,
     currentUser: (state) => state.user,
     isEmailVerified: (state) => state.user?.emailVerified || false,
+
+    //Authorization getters
+    canAddJobs: (state) => {
+      if (!state.user) return false;
+      return (
+        state.user.role === "admin" ||
+        state.user.role === "recruiter" ||
+        state.user.role === "employer"
+      );
+    },
+
+    isAdmin: (state) => state.user?.role === "admin",
+    isRecruiter: (state) => state.user?.role === "recruiter",
+    isEmployer: (state) => state.user?.role === "employer",
   },
 });

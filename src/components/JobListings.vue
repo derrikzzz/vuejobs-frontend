@@ -4,6 +4,7 @@ import JobListing from "@/components/JobListing.vue";
 import SearchBar from "@/components/SearchBar.vue";
 import { RouterLink } from "vue-router";
 import PulseLoader from "vue-spinner/src/PulseLoader.vue";
+import apiService from "@/services/api.js";
 
 defineProps({
   limit: Number,
@@ -23,8 +24,7 @@ const filteredJobs = ref([]);
 
 onMounted(async () => {
   try {
-    const response = await fetch("/api/jobs");
-    const data = await response.json();
+    const data = await apiService.getJobs();
     state.jobs = data;
     filteredJobs.value = data; // Initialize filtered jobs
     state.isLoading = false;

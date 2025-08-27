@@ -3,6 +3,7 @@ import { reactive, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import BackButton from "@/components/BackButton.vue";
+import apiService from "@/services/api.js";
 
 const router = useRouter();
 const route = useRoute(); //get id from route
@@ -31,33 +32,17 @@ const toast = useToast();
 
 const handleSubmit = async () => {
   const updatedJob = {
-    type: form.type,
+    job_type: form.type,
     title: form.title,
     description: form.description,
     salary: form.salary,
     location: form.location,
-    company: {
-      name: form.company.name,
-      description: form.company.description,
-      contactEmail: form.company.contactEmail,
-      contactPhone: form.company.contactPhone,
-    },
+    company: form.company.name,
+    remote: form.type === "Remote",
   };
 
   try {
-    const response = await fetch(`/api/jobs/${jobId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(updatedJob),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to update job");
-    }
-
-    const data = await response.json();
+    const data = await apiService.updateJob(jobId, updatedJob);
     console.log("Job updated successfully:", data);
 
     toast.success("Job updated successfully");
@@ -70,22 +55,22 @@ const handleSubmit = async () => {
 
 onMounted(async () => {
   try {
-    const response = await fetch(`/api/jobs/${jobId}`);
-    const data = await response.json();
+    const data = await apiService.getJob(jobId);
     state.job = data;
     state.isLoading = false;
 
     //populate form with job data
-    form.type = state.job.type;
+    form.type = state.job.job_type || state.job.type;
     form.title = state.job.title;
     form.description = state.job.description;
     form.salary = state.job.salary;
     form.location = state.job.location;
 
-    form.company.name = state.job.company.name;
-    form.company.description = state.job.company.description;
-    form.company.contactEmail = state.job.company.contactEmail;
-    form.company.contactPhone = state.job.company.contactPhone;
+    // Handle company data - API returns company as string, not object
+    form.company.name = state.job.company || "";
+    form.company.description = "";
+    form.company.contactEmail = "";
+    form.company.contactPhone = "";
   } catch (error) {
     console.error("Error fetching job:", error);
   } finally {

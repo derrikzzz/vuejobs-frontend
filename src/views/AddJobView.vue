@@ -1,8 +1,22 @@
 <script setup>
-import { reactive } from "vue";
+import { reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
+import { useAuthStore } from "@/stores/auth";
+import apiService from "@/services/api.js";
+
 const router = useRouter();
+const authStore = useAuthStore();
+const toast = useToast();
+
+// Check authorization on component mount
+onMounted(() => {
+  if (!authStore.canAddJobs) {
+    toast.error("You don't have permission to add jobs");
+    router.push("/jobs");
+    return;
+  }
+});
 
 const form = reactive({
   type: "Full-Time",
@@ -18,37 +32,25 @@ const form = reactive({
   },
 });
 
-const toast = useToast();
-
 const handleSubmit = async () => {
+  // Double-check authorization before submitting
+  if (!authStore.canAddJobs) {
+    toast.error("You don't have permission to add jobs");
+    return;
+  }
+
   const newJob = {
-    type: form.type,
+    job_type: form.type,
     title: form.title,
     description: form.description,
     salary: form.salary,
     location: form.location,
-    company: {
-      name: form.company.name,
-      description: form.company.description,
-      contactEmail: form.company.contactEmail,
-      contactPhone: form.company.contactPhone,
-    },
+    company: form.company.name,
+    remote: form.type === "Remote",
   };
 
   try {
-    const response = await fetch("/api/jobs", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newJob),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to add job");
-    }
-
-    const data = await response.json();
+    const data = await apiService.createJob(newJob);
     console.log("Job added successfully:", data);
 
     toast.success("Job added successfully");

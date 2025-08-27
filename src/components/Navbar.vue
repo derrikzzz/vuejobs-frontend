@@ -107,7 +107,9 @@ onBeforeUnmount(() => {
 
               <!-- Authenticated User Links -->
               <template v-if="isAuthenticated">
+                <!-- Only show Add Job for authorized users -->
                 <RouterLink
+                  v-if="authStore.canAddJobs"
                   to="/jobs/add"
                   @click="handleProtectedRouteClick('/jobs/add', $event)"
                   :class="[

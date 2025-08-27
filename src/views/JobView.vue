@@ -3,8 +3,8 @@ import PulseLoader from "vue-spinner/src/PulseLoader.vue";
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { reactive, onMounted } from "vue";
 import BackButton from "@/components/BackButton.vue";
-
 import { useToast } from "vue-toastification";
+import apiService from "@/services/api.js";
 
 const route = useRoute(); //need to get id with route variable
 const router = useRouter();
@@ -18,8 +18,7 @@ const state = reactive({
 
 onMounted(async () => {
   try {
-    const response = await fetch(`/api/jobs/${jobId}`);
-    const data = await response.json();
+    const data = await apiService.getJob(jobId);
     state.job = data;
     state.isLoading = false;
   } catch (error) {
@@ -33,16 +32,10 @@ const deleteJob = async () => {
   try {
     const confirm = window.confirm("Are you sure you want to delete this job?");
     if (confirm) {
-      const response = await fetch(`/api/jobs/${jobId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to delete job");
-      }
+      await apiService.deleteJob(jobId);
+      toast.success("Job deleted successfully");
+      router.push("/jobs");
     }
-
-    toast.success("Job deleted successfully");
-    router.push("/jobs");
   } catch (error) {
     console.error("Error deleting job:", error);
     toast.error("Error deleting job");
