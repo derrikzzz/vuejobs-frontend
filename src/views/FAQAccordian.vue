@@ -72,22 +72,22 @@ const isAllExpanded = () => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="text-center mb-8">
-      <h2 class="text-3xl font-bold text-gray-900 mb-4">
+  <div class="max-w-4xl mx-auto px-4 py-6 sm:py-8">
+    <div class="text-center mb-6 sm:mb-8">
+      <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
         Frequently Asked Questions
       </h2>
-      <p class="text-lg text-gray-600">
+      <p class="text-base sm:text-lg text-gray-600">
         Find answers to common questions about our job platform
       </p>
     </div>
 
     <!-- Control Buttons -->
-    <div class="flex justify-center gap-4 mb-6">
+    <div class="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-6">
       <button
         @click="expandAll"
         :class="[
-          'px-4 py-2 rounded-md font-medium transition-colors duration-200',
+          'px-4 py-2 rounded-md font-medium transition-colors duration-200 text-sm sm:text-base',
           isAllExpanded()
             ? 'bg-green-600 text-white hover:bg-green-700'
             : 'bg-blue-600 text-white hover:bg-blue-700',
@@ -97,25 +97,25 @@ const isAllExpanded = () => {
       </button>
       <button
         @click="collapseAll"
-        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200 text-sm sm:text-base"
       >
         Collapse All
       </button>
     </div>
 
     <div class="max-w-3xl mx-auto divide-y divide-gray-200">
-      <div v-for="(faq, index) in faqs" :key="index" class="py-6">
+      <div v-for="(faq, index) in faqs" :key="index" class="py-4 sm:py-6">
         <button
           @click="toggleSection(index)"
-          class="w-full flex items-center justify-between text-left hover:bg-gray-50 p-4 rounded-lg transition-colors duration-200"
+          class="w-full flex items-start sm:items-center justify-between text-left hover:bg-gray-50 p-3 sm:p-4 rounded-lg transition-colors duration-200"
         >
-          <span class="text-lg font-medium text-gray-900 pr-4">{{
-            faq.question
-          }}</span>
+          <span class="text-base sm:text-lg font-medium text-gray-900 pr-4 leading-snug">
+            {{ faq.question }}
+          </span>
 
           <svg
             :class="[
-              'h-6 w-6 text-gray-500 transform transition-transform duration-200 flex-shrink-0',
+              'h-5 w-5 sm:h-6 sm:w-6 text-gray-500 transform transition-transform duration-200 flex-shrink-0 mt-0.5 sm:mt-0',
               expandedSections.has(index) ? 'rotate-180' : '',
             ]"
             fill="none"
@@ -139,8 +139,8 @@ const isAllExpanded = () => {
           leave-from-class="opacity-100 max-h-96"
           leave-to-class="opacity-0 max-h-0"
         >
-          <div v-if="expandedSections.has(index)" class="mt-4 px-4 pb-4">
-            <div class="text-gray-600 leading-relaxed">{{ faq.answer }}</div>
+          <div v-if="expandedSections.has(index)" class="mt-4 px-3 sm:px-4 pb-4">
+            <div class="text-gray-600 leading-relaxed text-sm sm:text-base">{{ faq.answer }}</div>
           </div>
         </Transition>
       </div>

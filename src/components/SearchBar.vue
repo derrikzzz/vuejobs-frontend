@@ -58,23 +58,16 @@ const clearSearch = () => {
 
 <template>
   <div class="search-container mb-6">
-    <div class="flex items-center gap-2">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
       <div class="relative flex-1">
         <input
           v-model="searchTerm"
           type="text"
-          placeholder="Search jobs by title, company, location, or keywords..."
-          class="w-full p-3 pl-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="Search jobs by title, company, location..."
+          class="w-full p-3 pl-10 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
         />
-        <div
-          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-        >
-          <svg
-            class="h-5 w-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -88,12 +81,7 @@ const clearSearch = () => {
           @click="clearSearch"
           class="absolute inset-y-0 right-0 pr-3 flex items-center"
         >
-          <svg
-            class="h-5 w-5 text-gray-400 hover:text-gray-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg class="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -106,10 +94,8 @@ const clearSearch = () => {
     </div>
 
     <!-- Search results count -->
-    <div v-if="searchTerm" class="mt-2 text-sm text-gray-600">
-      Found {{ filteredJobs.length }} job{{
-        filteredJobs.length !== 1 ? "s" : ""
-      }}
+    <div v-if="searchTerm" class="mt-2 text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+      Found {{ filteredJobs.length }} job{{ filteredJobs.length !== 1 ? "s" : "" }}
       <span v-if="searchTerm"> for "{{ searchTerm }}"</span>
     </div>
   </div>
@@ -117,7 +103,13 @@ const clearSearch = () => {
 
 <style scoped>
 .search-container {
-  max-width: 600px;
+  max-width: 100%;
   margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .search-container {
+    max-width: 600px;
+  }
 }
 </style>

@@ -5,6 +5,8 @@ import SearchBar from "@/components/SearchBar.vue";
 import { RouterLink } from "vue-router";
 import PulseLoader from "vue-spinner/src/PulseLoader.vue";
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
+
 defineProps({
   limit: Number,
   showButton: {
@@ -18,15 +20,17 @@ const state = reactive({
   isLoading: true,
 });
 
-// Add this for filtered jobs
 const filteredJobs = ref([]);
 
 onMounted(async () => {
   try {
-    const response = await fetch("/api/jobs");
+    const response = await fetch(`${BASE_URL}/api/v1/jobs`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     state.jobs = data;
-    filteredJobs.value = data; // Initialize filtered jobs
+    filteredJobs.value = data;
     state.isLoading = false;
   } catch (error) {
     console.error("Error fetching jobs:", error);
@@ -35,7 +39,6 @@ onMounted(async () => {
   }
 });
 
-// Add this function to handle search results
 const handleSearchResults = (results) => {
   filteredJobs.value = results;
 };

@@ -14,10 +14,12 @@ defineProps({
 </script>
 
 <template>
-  <section class="bg-green-700 py-20 mb-4 relative overflow-hidden">
-    <WarpBackground 
-      :perspective="1200" 
-      :beam-size="12" 
+  <section
+    class="bg-green-700 py-12 sm:py-16 md:py-20 mb-4 relative overflow-hidden"
+  >
+    <WarpBackground
+      :perspective="1200"
+      :beam-size="12"
       :beams-per-side="5"
       :beam-duration="5"
       :beam-delay-max="6"
@@ -29,10 +31,14 @@ defineProps({
       class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center relative z-10"
     >
       <div class="text-center">
-        <h1 class="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl drop-shadow-lg">
+        <h1
+          class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white drop-shadow-lg leading-tight"
+        >
           {{ title }}
         </h1>
-        <p class="my-4 text-xl text-white drop-shadow-md">
+        <p
+          class="my-4 text-lg sm:text-xl text-white drop-shadow-md max-w-3xl mx-auto"
+        >
           {{ subtitle }}
         </p>
       </div>
