@@ -45,7 +45,8 @@ const handleSubmit = async () => {
   };
 
   try {
-    const response = await fetch(`/api/jobs/${jobId}`, {
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
+    const response = await fetch(`${BASE_URL}/api/v1/jobs/${jobId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -70,7 +71,8 @@ const handleSubmit = async () => {
 
 onMounted(async () => {
   try {
-    const response = await fetch(`/api/jobs/${jobId}`);
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
+    const response = await fetch(`${BASE_URL}/api/v1/jobs/${jobId}`);
     const data = await response.json();
     state.job = data;
     state.isLoading = false;

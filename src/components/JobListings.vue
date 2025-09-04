@@ -24,7 +24,7 @@ const filteredJobs = ref([]);
 
 onMounted(async () => {
   try {
-    const response = await fetch(`${BASE_URL}/api/v1/jobs`);
+    const response = await fetch(`${BASE_URL}/api/v1/jobs/`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

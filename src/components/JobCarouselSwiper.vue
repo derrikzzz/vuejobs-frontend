@@ -36,7 +36,8 @@ const swiperRef = ref(null);
 
 onMounted(async () => {
   try {
-    const response = await fetch("/api/jobs");
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
+    const response = await fetch(`${BASE_URL}/api/v1/jobs/`);
     const data = await response.json();
     state.jobs = data;
     state.isLoading = false;
