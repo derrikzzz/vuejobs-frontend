@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed } from "vue";
 import Card from "@/components/Card.vue";
+import AddActionForm from "@/components/AddActionForm.vue";
+
+const showAddModal = ref(false);
 
 const actions = ref([
   {
@@ -69,15 +72,22 @@ const toggleActionStatus = (actionId) => {
   }
 };
 
-const addAction = () => {
+const openAddModal = () => {
+  showAddModal.value = true;
+};
+
+const closeAddModal = () => {
+  showAddModal.value = false;
+};
+
+const addAction = (actionData) => {
   const newAction = {
     id: Date.now(),
-    title: "New action item",
-    priority: "upcoming",
-    dueDate: new Date().toISOString().split("T")[0],
+    ...actionData,
     status: "pending",
   };
   actions.value.push(newAction);
+  closeAddModal();
 };
 </script>
 
@@ -91,7 +101,7 @@ const addAction = () => {
           Manage your job search activities and stay organized
         </p>
         <button
-          @click="addAction"
+          @click="openAddModal"
           class="mt-4 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
         >
           Add New Action
@@ -307,6 +317,15 @@ const addAction = () => {
           </Card>
         </div>
       </div>
+    </div>
+
+    <!-- Add Action Modal -->
+    <div
+      v-if="showAddModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="closeAddModal"
+    >
+      <AddActionForm @submit="addAction" @cancel="closeAddModal" />
     </div>
   </div>
 </template>
