@@ -108,6 +108,19 @@ onBeforeUnmount(() => {
               Review Resume
             </RouterLink>
 
+            <RouterLink
+              to="/action-list"
+              @click="handleProtectedRouteClick('/action-list', $event)"
+              :class="[
+                isActiveLink('/action-list')
+                  ? 'bg-green-900'
+                  : 'hover:bg-gray-900',
+                'text-white px-3 py-2 rounded-md text-sm font-medium',
+              ]"
+            >
+              Action List
+            </RouterLink>
+
             <!-- Authenticated User Links -->
             <template v-if="isAuthenticated">
               <RouterLink
