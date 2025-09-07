@@ -1,6 +1,7 @@
 <script setup>
-import { reactive, defineProps, onMounted } from "vue";
+import { reactive, defineProps, onMounted, ref } from "vue";
 import JobListing from "@/components/JobListing.vue";
+import SearchBar from "@/components/SearchBar.vue";
 import { RouterLink } from "vue-router";
 import PulseLoader from "vue-spinner/src/PulseLoader.vue";
 
@@ -11,16 +12,21 @@ defineProps({
     default: false,
   },
 });
+
 const state = reactive({
   jobs: [],
   isLoading: true,
 });
+
+// Add this for filtered jobs
+const filteredJobs = ref([]);
 
 onMounted(async () => {
   try {
     const response = await fetch("/api/jobs");
     const data = await response.json();
     state.jobs = data;
+    filteredJobs.value = data; // Initialize filtered jobs
     state.isLoading = false;
   } catch (error) {
     console.error("Error fetching jobs:", error);
@@ -28,6 +34,11 @@ onMounted(async () => {
     state.isLoading = false;
   }
 });
+
+// Add this function to handle search results
+const handleSearchResults = (results) => {
+  filteredJobs.value = results;
+};
 </script>
 
 <template>
@@ -36,6 +47,12 @@ onMounted(async () => {
       <h2 class="text-3xl font-bold text-blue-500 mb-6 text-center">
         Browse Jobs
       </h2>
+
+      <!-- Add SearchBar here with jobs data -->
+      <div class="mb-6">
+        <SearchBar :jobs="state.jobs" @search-results="handleSearchResults" />
+      </div>
+
       <!-- Loading Spinner while loading is true -->
       <div v-if="state.isLoading" class="text-center text-gray-500 py-6">
         <PulseLoader color="#000" :size="10" :margin="2" />
@@ -44,7 +61,7 @@ onMounted(async () => {
       <!-- Show job listing when done loading -->
       <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <JobListing
-          v-for="job in state.jobs.slice(0, limit || state.jobs.length)"
+          v-for="job in filteredJobs.slice(0, limit || filteredJobs.length)"
           :key="job.id"
           :job="job"
         />
