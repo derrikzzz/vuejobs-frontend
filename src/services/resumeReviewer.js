@@ -1,261 +1,84 @@
-// Resume reviewer using Gemini API with PDF support
+import * as pdfjsLib from "pdfjs-dist";
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
+
+// Resume reviewer using Gemini API with client-side PDF parsing
 class ResumeReviewer {
   constructor() {
+    // We'll use the proxy endpoint, so we don't need the API key in the frontend
+    this.apiEndpoint =
+      "/gemini-api/v1beta/models/gemini-1.5-flash:generateContent";
     this.apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!this.apiKey) {
-      throw new Error(
-        "VITE_GEMINI_API_KEY is not configured in environment variables"
-      );
-    }
-    this.uploadEndpoint = `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${this.apiKey}`;
-    this.generateEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
-    this.filesEndpoint = `https://generativelanguage.googleapis.com/v1beta/files`;
   }
 
-  // Extract text from PDF using Gemini File API
-  async extractTextFromPDF(file) {
-    // Validate API key first
-    if (!this.apiKey || this.apiKey === 'undefined') {
-      throw new Error("VITE_GEMINI_API_KEY is not configured in environment variables");
-    }
-
-    let fileName = null;
-
+  // Extract text from PDF using client-side PDF.js
+  async extractTextFromPDF(file, progressCallback) {
     try {
-      console.log("Starting PDF upload process...");
+      console.log("Starting client-side PDF text extraction...");
+      if (progressCallback) progressCallback("Loading PDF...");
 
-      // Upload the PDF file to Gemini
-      const uploadResponse = await this.uploadFileToGemini(file);
-      console.log("Upload response:", uploadResponse);
+      // Convert file to ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
 
-      const fileUri = uploadResponse.file.uri;
-      fileName = uploadResponse.file.name;
+      if (progressCallback) progressCallback("Parsing PDF document...");
 
-      console.log("File uploaded, waiting for processing...");
+      // Load PDF document
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-      // Wait for file processing
-      await this.waitForFileProcessing(fileName);
+      console.log(`PDF loaded with ${pdf.numPages} pages`);
+      let fullText = "";
 
-      console.log("File processed, extracting text...");
+      // Extract text from each page
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        if (progressCallback)
+          progressCallback(
+            `Extracting text from page ${pageNum}/${pdf.numPages}...`
+          );
 
-      // Extract text using Gemini
-      const extractedText = await this.extractTextWithGemini(fileUri);
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
 
-      console.log("Text extracted successfully");
+        // Combine all text items from the page
+        const pageText = textContent.items
+          .map((item) => item.str)
+          .join(" ")
+          .trim();
 
-      // Clean up - delete the uploaded file
-      await this.deleteFile(fileName);
+        if (pageText) {
+          fullText += pageText + "\n\n";
+        }
+      }
 
-      return extractedText;
+      if (!fullText.trim()) {
+        throw new Error(
+          "No text could be extracted from the PDF - the file may contain only images or be password-protected"
+        );
+      }
+
+      console.log("PDF text extraction completed successfully");
+      if (progressCallback) progressCallback("PDF text extraction completed!");
+
+      return fullText.trim();
     } catch (error) {
       console.error("PDF extraction error details:", error);
 
-      // Clean up on error if file was uploaded
-      if (fileName) {
-        try {
-          await this.deleteFile(fileName);
-        } catch (cleanupError) {
-          console.warn("Failed to cleanup file on error:", cleanupError);
-        }
-      }
-
-      // Provide more specific error messages
-      if (error.message.includes("Upload failed")) {
-        throw new Error(`Upload error: ${error.message}`);
-      } else if (error.message.includes("File processing")) {
+      if (error.message.includes("Invalid PDF")) {
         throw new Error(
-          "PDF processing failed. The file may be corrupted or password-protected."
+          "Invalid PDF file. Please ensure the file is not corrupted."
         );
-      } else if (error.message.includes("Text extraction failed")) {
+      } else if (error.message.includes("password")) {
         throw new Error(
-          "Could not extract text from PDF. The file may contain only images."
+          "Password-protected PDFs are not supported. Please provide an unprotected PDF."
         );
       } else {
         throw new Error(
-          "Failed to process PDF. Please try again or paste the text manually."
+          "Failed to extract text from PDF. Please try again or paste the text manually."
         );
       }
-    }
-  }
-
-  // Upload file to Gemini File API
-  async uploadFileToGemini(file) {
-    try {
-      console.log(`Uploading file: ${file.name} (${file.size} bytes)`);
-
-      // Create FormData with the file
-      const formData = new FormData();
-      formData.append("file", file, file.name);
-
-      const response = await fetch(this.uploadEndpoint, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Upload error response:", errorText);
-
-        let errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
-
-        try {
-          const errorData = JSON.parse(errorText);
-          if (errorData.error?.message) {
-            errorMessage += ` - ${errorData.error.message}`;
-          }
-        } catch (parseError) {
-          // If cannot parse the error, include the raw text
-          errorMessage += ` - ${errorText}`;
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      console.log("Upload successful:", result);
-      return result;
-    } catch (error) {
-      console.error("Upload error:", error);
-      if (error.message.includes("Upload failed")) {
-        throw error;
-      }
-      throw new Error(`Upload failed: ${error.message}`);
-    }
-  }
-
-  // Wait for file processing to complete
-  async waitForFileProcessing(fileName) {
-    const maxAttempts = 15; // Increased attempts
-    const delay = 2000; // 2 seconds
-
-    console.log(`Waiting for file processing: ${fileName}`);
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        const response = await fetch(
-          `${this.filesEndpoint}/${fileName}?key=${this.apiKey}`
-        );
-
-        if (response.ok) {
-          const fileData = await response.json();
-          console.log(
-            `Processing attempt ${attempt + 1}, state: ${fileData.state}`
-          );
-
-          if (fileData.state === "ACTIVE") {
-            return fileData;
-          }
-          if (fileData.state === "FAILED") {
-            throw new Error(
-              "File processing failed - the PDF may be corrupted or unsupported"
-            );
-          }
-          // If state is PROCESSING, continue waiting
-        } else {
-          console.warn(`File status check failed: ${response.status}`);
-        }
-
-        // Wait before next attempt
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      } catch (error) {
-        console.error(`Processing check attempt ${attempt + 1} failed:`, error);
-        if (attempt === maxAttempts - 1) {
-          throw error;
-        }
-      }
-    }
-
-    throw new Error(
-      "File processing timeout - please try again with a smaller file"
-    );
-  }
-
-  // Extract text using Gemini with the uploaded file
-  async extractTextWithGemini(fileUri) {
-    const requestBody = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: "Please extract all the text content from this PDF resume. Return only the plain text content without any additional commentary, formatting, or analysis.",
-            },
-            {
-              file_data: {
-                mime_type: "application/pdf",
-                file_uri: fileUri,
-              },
-            },
-          ],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.0, // More deterministic
-        maxOutputTokens: 8000, // Increased token limit
-      },
-    };
-
-    console.log("Sending text extraction request...");
-
-    const response = await fetch(this.generateEndpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Text extraction error response:", errorText);
-
-      let errorMessage = `Text extraction failed: ${response.status} ${response.statusText}`;
-
-      try {
-        const errorData = JSON.parse(errorText);
-        if (errorData.error?.message) {
-          errorMessage += ` - ${errorData.error.message}`;
-        }
-      } catch (parseError) {
-        errorMessage += ` - ${errorText}`;
-      }
-
-      throw new Error(errorMessage);
-    }
-
-    const data = await response.json();
-    const content =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((p) => p?.text || "")
-        .join("") || "";
-
-    if (!content || content.trim().length === 0) {
-      throw new Error(
-        "No text could be extracted from the PDF - the file may contain only images or be password-protected"
-      );
-    }
-
-    return content.trim();
-  }
-
-  // Delete uploaded file from Gemini
-  async deleteFile(fileName) {
-    try {
-      const response = await fetch(
-        `${this.filesEndpoint}/${fileName}?key=${this.apiKey}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.ok) {
-        console.log("File deleted successfully");
-      } else {
-        console.warn("Failed to delete file:", response.status);
-      }
-    } catch (error) {
-      console.warn("Failed to delete uploaded file:", error);
-      // Non-critical error, don't throw
     }
   }
 
@@ -285,14 +108,7 @@ Your review should follow this structured output:
    - Example style: *"Optimized X by Y%, leading to Z impact."*  
 
 Tone: Be direct, specific, and supportive—like a recruiter giving actionable coaching. Avoid vague advice ("make it stronger"), instead show *how* to improve with concrete rewrites and examples.
-If applicable, suggest other jobs that the candidate may be a good fit for and be descriptive and detailed as much as possible.
-
-Inputs:  
-- Resume text  
-- (Optional) Job description
-
-Outputs:  
-- A structured review following the above format, with tangible improvements that would increase the candidate's interview chances.`;
+If applicable, suggest other jobs that the candidate may be a good fit for and be descriptive and detailed as much as possible.`;
 
     const prompt = [
       instruction,
@@ -301,12 +117,8 @@ Outputs:
       text,
       "",
       jobDescription ? `Job description:\n${jobDescription}\n` : "",
-      "Return:",
-      "- A brief overall assessment",
-      "- Top strengths (bulleted)",
-      "- Top issues to fix (bulleted)",
-      "- Tailoring suggestions specific to the target role (if provided)",
-      "- Suggested bullet rewrites (2-5 improved bullet examples)",
+      "",
+      "Please provide a structured review following the format above, with tangible improvements that would increase the candidate's interview chances.",
     ]
       .filter(Boolean)
       .join("\n");
@@ -314,18 +126,29 @@ Outputs:
     const requestBody = {
       contents: [
         {
-          role: "user",
-          parts: [{ text: prompt }],
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
         },
       ],
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 2000,
+        maxOutputTokens: 4000,
+        topP: 0.8,
+        topK: 40,
       },
     };
 
     try {
-      const response = await fetch(this.generateEndpoint, {
+      // Add API key as fallback if proxy doesn't handle it
+      const url =
+        this.apiKey && !this.apiEndpoint.includes("key=")
+          ? `${this.apiEndpoint}?key=${this.apiKey}`
+          : this.apiEndpoint;
+
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -341,10 +164,7 @@ Outputs:
       }
 
       const data = await response.json();
-      const content =
-        data?.candidates?.[0]?.content?.parts
-          ?.map((p) => p?.text || "")
-          .join("") || "";
+      const content = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
       if (!content) {
         throw new Error("Invalid response from Gemini API");

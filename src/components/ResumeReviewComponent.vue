@@ -3,10 +3,11 @@ import { ref } from "vue";
 import { useToast } from "vue-toastification";
 import ResumeReviewer from "@/services/resumeReviewer";
 import vueFilePond from "vue-filepond";
+import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 import "filepond/dist/filepond.min.css";
 
-// Create FilePond component
-const FilePond = vueFilePond();
+// Create FilePond component with plugins
+const FilePond = vueFilePond(FilePondPluginFileValidateType);
 
 // Props
 const props = defineProps({
@@ -30,41 +31,50 @@ const loading = ref(false);
 const review = ref("");
 const error = ref("");
 const uploadLoading = ref(false);
+const uploadProgress = ref("");
 const filePondRef = ref(null);
 
 const toast = useToast();
 
 // FilePond event handlers
-const handleFileAdd = (error, file) => {
+const handleFileAdd = async (error, file) => {
   if (error) {
     console.error("File add error:", error);
     toast.error("Error adding file");
     return;
   }
+  
   console.log("File added:", file.filename);
-};
-
-const handleFileProcess = async (error, file) => {
-  if (error) {
-    console.error("File process error:", error);
-    toast.error("Error processing file");
-    return;
-  }
-
+  
+  // Process the file immediately when added
   uploadLoading.value = true;
+  uploadProgress.value = "Preparing to upload PDF...";
   error.value = "";
 
   try {
     // Get the actual file from FilePond
     const actualFile = file.file;
+    
+    // Validate file type
+    if (!actualFile.type || actualFile.type !== 'application/pdf') {
+      throw new Error('Please upload a PDF file');
+    }
 
+    uploadProgress.value = "Uploading PDF to AI service...";
     const reviewer = new ResumeReviewer();
-    const extractedText = await reviewer.extractTextFromPDF(actualFile);
+    
+    // Add progress callback for better UX
+    const extractedText = await reviewer.extractTextFromPDF(actualFile, (progress) => {
+      uploadProgress.value = progress;
+    });
+    
     resumeText.value = extractedText;
+    uploadProgress.value = "PDF processed successfully!";
     toast.success("PDF uploaded and text extracted successfully!");
   } catch (err) {
     console.error("File processing error:", err);
     error.value = err.message || "Failed to process PDF file";
+    uploadProgress.value = `Error: ${error.value}`;
     toast.error(error.value);
 
     // Remove the file from FilePond on error
@@ -72,7 +82,10 @@ const handleFileProcess = async (error, file) => {
       filePondRef.value.removeFile(file.id);
     }
   } finally {
-    uploadLoading.value = false;
+    setTimeout(() => {
+      uploadLoading.value = false;
+      uploadProgress.value = "";
+    }, 2000);
   }
 };
 
@@ -164,18 +177,13 @@ defineExpose({
           :max-files="1"
           :max-file-size="'20MB'"
           :check-validity="true"
-          :instant-upload="false"
-          :allow-revert="true"
-          :allow-remove="true"
           :credits="false"
           @addfile="handleFileAdd"
-          @processfile="handleFileProcess"
           @removefile="handleFileRemove"
           :style-panel-layout="'compact'"
           :style-load-indicator-position="'center bottom'"
           :style-progress-indicator-position="'right bottom'"
           :style-button-remove-item-position="'left bottom'"
-          :style-button-process-item-position="'right bottom'"
         />
 
         <!-- Upload Loading Indicator -->
@@ -183,7 +191,7 @@ defineExpose({
           <div
             class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"
           ></div>
-          <span class="text-sm text-gray-600">Processing PDF with AI...</span>
+          <span class="text-sm text-gray-600">{{ uploadProgress || "Processing PDF with AI..." }}</span>
         </div>
       </div>
 

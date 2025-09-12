@@ -242,6 +242,8 @@ class AuthService {
           displayName,
           email,
           photoURL: photoURL || null,
+          role: additionalData.role || 'job_seeker', // Default role
+          permissions: this.getDefaultPermissions(additionalData.role || 'job_seeker'),
           createdAt,
           updatedAt: createdAt,
           ...additionalData,
