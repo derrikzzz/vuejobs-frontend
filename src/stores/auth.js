@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { useToast } from "vue-toastification";
 import authService from "@/services/authService";
 
 export const useAuthStore = defineStore("auth", {

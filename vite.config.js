@@ -10,20 +10,26 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), "");
 
+  const plugins = [
+    vue(),
+    nodePolyfills({
+      include: ["stream", "util", "buffer", "process", "crypto"],
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+      protocolImports: true,
+    }),
+  ];
+
+  // Only add devtools plugin in development mode
+  if (mode === 'development') {
+    plugins.push(vueDevTools());
+  }
+
   return {
-    plugins: [
-      vue(),
-      vueDevTools(),
-      nodePolyfills({
-        include: ["stream", "util", "buffer", "process", "crypto"],
-        globals: {
-          Buffer: true,
-          global: true,
-          process: true,
-        },
-        protocolImports: true,
-      }),
-    ],
+    plugins,
     server: {
       port: 5173,
       proxy: {
@@ -76,6 +82,10 @@ export default defineConfig(({ mode }) => {
     },
     worker: {
       format: "es",
+    },
+    test: {
+      environment: "jsdom",
+      globals: true,
     },
   };
 });

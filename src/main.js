@@ -1,6 +1,5 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
-import App from "./App.vue";
 import "./assets/main.css";
 import "primeicons/primeicons.css";
 import App2 from "./App2.vue";
