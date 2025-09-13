@@ -14,6 +14,7 @@ const name = ref("");
 const email = ref("");
 const password = ref("");
 const confirmPassword = ref("");
+const role = ref("job_seeker"); // Default role
 const loading = ref(false);
 const acceptTerms = ref(false);
 
@@ -65,6 +66,7 @@ const handleSignup = async () => {
       name: name.value,
       email: email.value,
       password: password.value,
+      role: role.value,
     });
 
     if (result.success) {
@@ -159,6 +161,24 @@ const handleGoogleSignup = async () => {
               required
               class="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              I am a:
+            </label>
+            <select
+              v-model="role"
+              class="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="job_seeker">
+                🔍 Job Seeker - Looking for opportunities
+              </option>
+              <option value="employer">🏢 Employer - Hiring talent</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">
+              You can change this later in your profile settings
+            </p>
           </div>
 
           <div class="flex items-center">

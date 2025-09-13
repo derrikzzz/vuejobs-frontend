@@ -162,6 +162,27 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    // Update user role (admin only)
+    async updateUserRole(userId, newRole) {
+      try {
+        const result = await authService.updateUserRole(
+          userId,
+          newRole,
+          this.user.uid
+        );
+        return result;
+      } catch (error) {
+        console.error("Update user role error:", error);
+        return { success: false, error: error.message };
+      }
+    },
+
+    // Check if current user has specific permission
+    async checkPermission(permission) {
+      if (!this.user) return false;
+      return await authService.hasPermission(this.user.uid, permission);
+    },
+
     // Cleanup auth listener
     cleanupAuth() {
       if (this.authUnsubscribe) {
@@ -174,5 +195,28 @@ export const useAuthStore = defineStore("auth", {
     isAuthenticated: (state) => !!state.user,
     currentUser: (state) => state.user,
     isEmailVerified: (state) => state.user?.emailVerified || false,
+
+    // Role-Based Access Control Getters
+    userRole: (state) => state.user?.role || "job_seeker",
+    userPermissions: (state) => state.user?.permissions || [],
+    isJobSeeker: (state) => state.user?.role === "job_seeker",
+    isEmployer: (state) => state.user?.role === "employer",
+    isAdmin: (state) => state.user?.role === "admin",
+
+    // Permission checker
+    hasPermission: (state) => (permission) => {
+      return state.user?.permissions?.includes(permission) || false;
+    },
+
+    // Role-based permission checks
+    canCreateJobs: (state) => {
+      return state.user?.permissions?.includes("jobs:create") || false;
+    },
+    canEditAllJobs: (state) => {
+      return state.user?.permissions?.includes("jobs:edit:all") || false;
+    },
+    canManageUsers: (state) => {
+      return state.user?.permissions?.includes("users:manage") || false;
+    },
   },
 });

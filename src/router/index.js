@@ -49,13 +49,21 @@ const router = createRouter({
       path: "/jobs/add",
       name: "add-job",
       component: AddJobView,
-      meta: { requiresAuth: true },
+      meta: {
+        requiresAuth: true,
+        requiresPermission: "jobs:create",
+        roles: ["employer", "admin"],
+      },
     },
     {
       path: "/jobs/edit/:id",
       name: "edit-job",
       component: EditJobView,
-      meta: { requiresAuth: true },
+      meta: {
+        requiresAuth: true,
+        requiresPermission: "jobs:edit:own", // Will be checked dynamically for ownership
+        roles: ["employer", "admin"],
+      },
     },
     {
       path: "/review-resume",
@@ -74,6 +82,16 @@ const router = createRouter({
       name: "action-list",
       component: ActionListView,
       meta: { requiresAuth: true },
+    },
+    {
+      path: "/admin",
+      name: "admin",
+      component: () => import("@/views/AdminView.vue"),
+      meta: {
+        requiresAuth: true,
+        roles: ["admin"],
+        requiresPermission: "users:manage",
+      },
     },
     {
       path: "/:catchAll(.*)*",
@@ -115,6 +133,30 @@ router.beforeEach(async (to, from, next) => {
       query: { message: "Please verify your email address" },
     });
     return;
+  }
+
+  // Check role-based access
+  if (to.meta.roles && authStore.isAuthenticated) {
+    const userRole = authStore.userRole;
+    if (!to.meta.roles.includes(userRole)) {
+      next({
+        name: "home",
+        query: { error: "You don't have permission to access this page" },
+      });
+      return;
+    }
+  }
+
+  // Check specific permissions
+  if (to.meta.requiresPermission && authStore.isAuthenticated) {
+    const hasPermission = authStore.hasPermission(to.meta.requiresPermission);
+    if (!hasPermission) {
+      next({
+        name: "home",
+        query: { error: "Insufficient permissions to access this page" },
+      });
+      return;
+    }
   }
 
   next();

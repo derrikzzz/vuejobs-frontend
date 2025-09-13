@@ -1,154 +1,161 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useRouter, useRoute } from 'vue-router'
-import { useToast } from 'vue-toastification'
-import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
+import { ref, computed, onMounted } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { useRouter, useRoute } from "vue-router";
+import { useToast } from "vue-toastification";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 
-const authStore = useAuthStore()
-const router = useRouter()
-const route = useRoute()
-const toast = useToast()
+const authStore = useAuthStore();
+const router = useRouter();
+const route = useRoute();
+const toast = useToast();
 
-const loading = ref(false)
-const activeTab = ref('profile')
-const showChangePassword = ref(false)
+const loading = ref(false);
+const activeTab = ref("profile");
+const showChangePassword = ref(false);
 
 // Profile form data
 const profileForm = ref({
-  displayName: '',
-  email: ''
-})
+  displayName: "",
+  email: "",
+});
 
 // Password change form
 const passwordForm = ref({
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-})
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
+});
 
-const user = computed(() => authStore.currentUser)
-const isEmailVerified = computed(() => authStore.isEmailVerified)
+const user = computed(() => authStore.currentUser);
+const isEmailVerified = computed(() => authStore.isEmailVerified);
 
 onMounted(() => {
   if (user.value) {
     profileForm.value = {
-      displayName: user.value.displayName || '',
-      email: user.value.email || ''
-    }
+      displayName: user.value.displayName || "",
+      email: user.value.email || "",
+    };
   }
 
   // Show message if redirected here for email verification
   if (route.query.message) {
-    toast.info(route.query.message)
+    toast.info(route.query.message);
   }
-})
+});
 
 const handleUpdateProfile = async () => {
   if (!profileForm.value.displayName) {
-    toast.error('Please enter your name')
-    return
+    toast.error("Please enter your name");
+    return;
   }
 
-  loading.value = true
+  loading.value = true;
   try {
     const result = await authStore.updateProfile({
-      displayName: profileForm.value.displayName
-    })
+      displayName: profileForm.value.displayName,
+    });
 
     if (result.success) {
-      toast.success('Profile updated successfully')
+      toast.success("Profile updated successfully");
     } else {
-      toast.error(result.error || 'Failed to update profile')
+      toast.error(result.error || "Failed to update profile");
     }
   } catch (error) {
-    toast.error('An error occurred while updating profile')
+    toast.error("An error occurred while updating profile");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const handleChangePassword = async () => {
-  if (!passwordForm.value.currentPassword || !passwordForm.value.newPassword || !passwordForm.value.confirmPassword) {
-    toast.error('Please fill in all password fields')
-    return
+  if (
+    !passwordForm.value.currentPassword ||
+    !passwordForm.value.newPassword ||
+    !passwordForm.value.confirmPassword
+  ) {
+    toast.error("Please fill in all password fields");
+    return;
   }
 
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-    toast.error('New passwords do not match')
-    return
+    toast.error("New passwords do not match");
+    return;
   }
 
   if (passwordForm.value.newPassword.length < 6) {
-    toast.error('New password must be at least 6 characters long')
-    return
+    toast.error("New password must be at least 6 characters long");
+    return;
   }
 
   // Strong password validation
-  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
   if (!strongPasswordRegex.test(passwordForm.value.newPassword)) {
-    toast.error('Password must contain uppercase, lowercase, number, and special character')
-    return
+    toast.error(
+      "Password must contain uppercase, lowercase, number, and special character"
+    );
+    return;
   }
 
-  loading.value = true
+  loading.value = true;
   try {
     const result = await authStore.changePassword({
       currentPassword: passwordForm.value.currentPassword,
-      newPassword: passwordForm.value.newPassword
-    })
+      newPassword: passwordForm.value.newPassword,
+    });
 
     if (result.success) {
-      toast.success('Password changed successfully')
+      toast.success("Password changed successfully");
       passwordForm.value = {
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      }
-      showChangePassword.value = false
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      };
+      showChangePassword.value = false;
     } else {
-      toast.error(result.error || 'Failed to change password')
+      toast.error(result.error || "Failed to change password");
     }
   } catch (error) {
-    toast.error('An error occurred while changing password')
+    toast.error("An error occurred while changing password");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const handleSendVerificationEmail = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    const result = await authStore.sendEmailVerification()
+    const result = await authStore.sendEmailVerification();
 
     if (result.success) {
-      toast.success('Verification email sent! Check your inbox.')
+      toast.success("Verification email sent! Check your inbox.");
     } else {
-      toast.error(result.error || 'Failed to send verification email')
+      toast.error(result.error || "Failed to send verification email");
     }
   } catch (error) {
-    toast.error('An error occurred while sending verification email')
+    toast.error("An error occurred while sending verification email");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const handleLogout = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    const result = await authStore.logout()
+    const result = await authStore.logout();
     if (result.success) {
-      toast.success('Logged out successfully')
-      router.push('/login')
+      toast.success("Logged out successfully");
+      router.push("/login");
     } else {
-      toast.error(result.error || 'Failed to logout')
+      toast.error(result.error || "Failed to logout");
     }
   } catch (error) {
-    toast.error('An error occurred during logout')
+    toast.error("An error occurred during logout");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 </script>
 
 <template>
@@ -158,17 +165,30 @@ const handleLogout = async () => {
       <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-4">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+            <div
+              class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center"
+            >
               <span class="text-2xl font-bold text-green-600">
-                {{ user?.displayName?.charAt(0)?.toUpperCase() || '?' }}
+                {{ user?.displayName?.charAt(0)?.toUpperCase() || "?" }}
               </span>
             </div>
             <div>
-              <h1 class="text-2xl font-bold text-gray-900">{{ user?.displayName || 'Anonymous User' }}</h1>
+              <h1 class="text-2xl font-bold text-gray-900">
+                {{ user?.displayName || "Anonymous User" }}
+              </h1>
               <p class="text-gray-600">{{ user?.email }}</p>
               <div class="flex items-center mt-1">
-                <span class="text-sm" :class="isEmailVerified ? 'text-green-600' : 'text-orange-600'">
-                  {{ isEmailVerified ? '✓ Email Verified' : '⚠️ Email Not Verified' }}
+                <span
+                  class="text-sm"
+                  :class="
+                    isEmailVerified ? 'text-green-600' : 'text-orange-600'
+                  "
+                >
+                  {{
+                    isEmailVerified
+                      ? "✓ Email Verified"
+                      : "⚠️ Email Not Verified"
+                  }}
                 </span>
               </div>
             </div>
@@ -183,11 +203,18 @@ const handleLogout = async () => {
       </div>
 
       <!-- Email Verification Alert -->
-      <div v-if="!isEmailVerified" class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+      <div
+        v-if="!isEmailVerified"
+        class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6"
+      >
         <div class="flex items-center justify-between">
           <div>
-            <h3 class="text-sm font-medium text-orange-800">Email Verification Required</h3>
-            <p class="text-sm text-orange-700 mt-1">Please verify your email address to access all features.</p>
+            <h3 class="text-sm font-medium text-orange-800">
+              Email Verification Required
+            </h3>
+            <p class="text-sm text-orange-700 mt-1">
+              Please verify your email address to access all features.
+            </p>
           </div>
           <InteractiveHoverButton
             text="Send Verification Email"
@@ -208,7 +235,7 @@ const handleLogout = async () => {
                 activeTab === 'profile'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700',
-                'py-4 px-1 border-b-2 font-medium text-sm'
+                'py-4 px-1 border-b-2 font-medium text-sm',
               ]"
             >
               Profile Settings
@@ -219,7 +246,7 @@ const handleLogout = async () => {
                 activeTab === 'security'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700',
-                'py-4 px-1 border-b-2 font-medium text-sm'
+                'py-4 px-1 border-b-2 font-medium text-sm',
               ]"
             >
               Security
@@ -229,10 +256,18 @@ const handleLogout = async () => {
 
         <!-- Profile Tab -->
         <div v-if="activeTab === 'profile'" class="p-6">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">Profile Information</h2>
-          <form @submit.prevent="handleUpdateProfile" class="space-y-4 max-w-md">
+          <h2 class="text-lg font-medium text-gray-900 mb-4">
+            Profile Information
+          </h2>
+          <form
+            @submit.prevent="handleUpdateProfile"
+            class="space-y-4 max-w-md"
+          >
             <div>
-              <label for="displayName" class="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                for="displayName"
+                class="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Full Name
               </label>
               <input
@@ -244,7 +279,10 @@ const handleLogout = async () => {
               />
             </div>
             <div>
-              <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                for="email"
+                class="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Email Address
               </label>
               <input
@@ -267,15 +305,19 @@ const handleLogout = async () => {
 
         <!-- Security Tab -->
         <div v-if="activeTab === 'security'" class="p-6">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">Security Settings</h2>
-          
+          <h2 class="text-lg font-medium text-gray-900 mb-4">
+            Security Settings
+          </h2>
+
           <div class="space-y-6">
             <!-- Change Password -->
             <div>
               <div class="flex items-center justify-between">
                 <div>
                   <h3 class="text-sm font-medium text-gray-900">Password</h3>
-                  <p class="text-sm text-gray-500">Change your account password</p>
+                  <p class="text-sm text-gray-500">
+                    Change your account password
+                  </p>
                 </div>
                 <InteractiveHoverButton
                   v-if="!showChangePassword"
@@ -284,8 +326,12 @@ const handleLogout = async () => {
                   class="bg-gray-600 text-white border-gray-600 hover:bg-gray-700"
                 />
               </div>
-              
-              <form v-if="showChangePassword" @submit.prevent="handleChangePassword" class="mt-4 space-y-4 max-w-md">
+
+              <form
+                v-if="showChangePassword"
+                @submit.prevent="handleChangePassword"
+                class="mt-4 space-y-4 max-w-md"
+              >
                 <div>
                   <input
                     v-model="passwordForm.currentPassword"
@@ -323,7 +369,14 @@ const handleLogout = async () => {
                   <InteractiveHoverButton
                     text="Cancel"
                     type="button"
-                    @click="showChangePassword = false; passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' }"
+                    @click="
+                      showChangePassword = false;
+                      passwordForm = {
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: '',
+                      };
+                    "
                     class="bg-gray-500 text-white border-gray-500 hover:bg-gray-600"
                   />
                 </div>
@@ -332,12 +385,18 @@ const handleLogout = async () => {
 
             <!-- Account Actions -->
             <div class="border-t pt-6">
-              <h3 class="text-sm font-medium text-gray-900 mb-4">Account Actions</h3>
+              <h3 class="text-sm font-medium text-gray-900 mb-4">
+                Account Actions
+              </h3>
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
                   <div>
-                    <p class="text-sm font-medium text-gray-900">Sign out of all devices</p>
-                    <p class="text-sm text-gray-500">This will log you out of all active sessions</p>
+                    <p class="text-sm font-medium text-gray-900">
+                      Sign out of all devices
+                    </p>
+                    <p class="text-sm text-gray-500">
+                      This will log you out of all active sessions
+                    </p>
                   </div>
                   <InteractiveHoverButton
                     text="Sign Out All"

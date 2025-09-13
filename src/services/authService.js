@@ -239,13 +239,18 @@ class AuthService {
 
       try {
         await setDoc(userRef, {
+          uid: user.uid,
           displayName,
           email,
           photoURL: photoURL || null,
-          role: additionalData.role || 'job_seeker', // Default role
-          permissions: this.getDefaultPermissions(additionalData.role || 'job_seeker'),
           createdAt,
           updatedAt: createdAt,
+          // Role-Based Access Control
+          role: additionalData.role || "job_seeker", // Default role
+          permissions: this.getRolePermissions(
+            additionalData.role || "job_seeker"
+          ),
+          isActive: true,
           ...additionalData,
         });
       } catch (error) {
@@ -261,6 +266,88 @@ class AuthService {
 
     if (!userDoc.exists()) {
       await this.createUserDocument(user);
+    }
+  }
+
+  // Role-Based Access Control Methods
+  getRolePermissions(role) {
+    const rolePermissions = {
+      job_seeker: [
+        "profile:edit:own",
+        "applications:create",
+        "applications:view:own",
+        "resume:review",
+      ],
+      employer: [
+        "profile:edit:own",
+        "jobs:create",
+        "jobs:edit:own",
+        "jobs:delete:own",
+        "jobs:view:all",
+        "applications:view:own_jobs",
+      ],
+      admin: [
+        "profile:edit:own",
+        "profile:edit:all",
+        "jobs:create",
+        "jobs:edit:all",
+        "jobs:delete:all",
+        "jobs:view:all",
+        "users:manage",
+        "applications:view:all",
+        "system:admin",
+      ],
+    };
+
+    return rolePermissions[role] || rolePermissions.job_seeker;
+  }
+
+  // Check if user has specific permission
+  async hasPermission(userId, permission) {
+    try {
+      const userDoc = await this.getUserDocument(userId);
+      if (!userDoc.success) return false;
+
+      const userPermissions = userDoc.data.permissions || [];
+      return userPermissions.includes(permission);
+    } catch (error) {
+      console.error("Error checking permission:", error);
+      return false;
+    }
+  }
+
+  // Update user role (admin only)
+  async updateUserRole(userId, newRole, adminUserId) {
+    try {
+      // Check if the admin has permission to manage users
+      const hasPermission = await this.hasPermission(
+        adminUserId,
+        "users:manage"
+      );
+      if (!hasPermission) {
+        return {
+          success: false,
+          error: "Insufficient permissions to manage users",
+        };
+      }
+
+      const userRef = doc(this.db, "users", userId);
+      const updatedAt = new Date().toISOString();
+
+      await updateDoc(userRef, {
+        role: newRole,
+        permissions: this.getRolePermissions(newRole),
+        updatedAt,
+        lastRoleUpdate: {
+          date: updatedAt,
+          updatedBy: adminUserId,
+        },
+      });
+
+      return { success: true, message: "User role updated successfully" };
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      return { success: false, error: error.message };
     }
   }
 

@@ -108,22 +108,10 @@ onBeforeUnmount(() => {
               Review Resume
             </RouterLink>
 
-            <RouterLink
-              to="/action-list"
-              @click="handleProtectedRouteClick('/action-list', $event)"
-              :class="[
-                isActiveLink('/action-list')
-                  ? 'bg-green-900'
-                  : 'hover:bg-gray-900',
-                'text-white px-3 py-2 rounded-md text-sm font-medium',
-              ]"
-            >
-              Action List
-            </RouterLink>
-
             <!-- Authenticated User Links -->
             <template v-if="isAuthenticated">
               <RouterLink
+                v-if="authStore.canCreateJobs"
                 to="/jobs/add"
                 @click="handleProtectedRouteClick('/jobs/add', $event)"
                 :class="[
@@ -182,6 +170,14 @@ onBeforeUnmount(() => {
                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Profile Settings
+                  </RouterLink>
+                  <RouterLink
+                    v-if="authStore.isAdmin"
+                    to="/admin"
+                    @click="showUserMenu = false"
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    👑 Admin Dashboard
                   </RouterLink>
                   <button
                     @click="handleLogout"
@@ -304,6 +300,7 @@ onBeforeUnmount(() => {
         <!-- Authenticated User Mobile Links -->
         <template v-if="isAuthenticated">
           <RouterLink
+            v-if="authStore.canCreateJobs"
             to="/jobs/add"
             @click="handleProtectedRouteClick('/jobs/add', $event)"
             :class="[
