@@ -29,11 +29,19 @@ onMounted(async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    state.jobs = data;
-    filteredJobs.value = data;
+    
+    // Transform the data to match frontend expectations
+    const transformedJobs = data.map(job => ({
+      ...job,
+      type: job.job_type || job.type // Map job_type to type
+    }));
+    
+    state.jobs = transformedJobs;
+    filteredJobs.value = transformedJobs;
     state.isLoading = false;
   } catch (error) {
     console.error("Error fetching jobs:", error);
+    state.isLoading = false;
   } finally {
     state.isLoading = false;
   }

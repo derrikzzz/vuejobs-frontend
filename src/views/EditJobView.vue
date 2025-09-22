@@ -31,7 +31,7 @@ const toast = useToast();
 
 const handleSubmit = async () => {
   const updatedJob = {
-    type: form.type,
+    job_type: form.type, // Send as job_type to match API expectations
     title: form.title,
     description: form.description,
     salary: form.salary,
@@ -74,7 +74,14 @@ onMounted(async () => {
     const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
     const response = await fetch(`${BASE_URL}/api/v1/jobs/${jobId}`);
     const data = await response.json();
-    state.job = data;
+    
+    // Transform the data to match frontend expectations
+    const transformedJob = {
+      ...data,
+      type: data.job_type || data.type // Map job_type to type
+    };
+    
+    state.job = transformedJob;
     state.isLoading = false;
 
     //populate form with job data
@@ -84,12 +91,15 @@ onMounted(async () => {
     form.salary = state.job.salary;
     form.location = state.job.location;
 
-    form.company.name = state.job.company.name;
-    form.company.description = state.job.company.description;
-    form.company.contactEmail = state.job.company.contactEmail;
-    form.company.contactPhone = state.job.company.contactPhone;
+    if (state.job.company) {
+      form.company.name = state.job.company.name || '';
+      form.company.description = state.job.company.description || '';
+      form.company.contactEmail = state.job.company.contactEmail || '';
+      form.company.contactPhone = state.job.company.contactPhone || '';
+    }
   } catch (error) {
     console.error("Error fetching job:", error);
+    state.isLoading = false;
   } finally {
     state.isLoading = false;
   }

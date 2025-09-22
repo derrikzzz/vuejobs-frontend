@@ -17,13 +17,22 @@ const state = reactive({
 
 onMounted(async () => {
   try {
-    const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
+    const BASE_URL =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
     const response = await fetch(`${BASE_URL}/api/v1/jobs/${jobId}`);
     const data = await response.json();
-    state.job = data;
+
+    // Transform the data to match frontend expectations
+    const transformedJob = {
+      ...data,
+      type: data.job_type || data.type, // Map job_type to type
+    };
+
+    state.job = transformedJob;
     state.isLoading = false;
   } catch (error) {
     console.error("Error fetching job:", error);
+    state.isLoading = false;
   } finally {
     state.isLoading = false;
   }
@@ -33,7 +42,8 @@ const deleteJob = async () => {
   try {
     const confirm = window.confirm("Are you sure you want to delete this job?");
     if (confirm) {
-      const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
+      const BASE_URL =
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
       const response = await fetch(`${BASE_URL}/api/v1/jobs/${jobId}`, {
         method: "DELETE",
       });

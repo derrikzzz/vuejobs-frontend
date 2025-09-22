@@ -22,7 +22,7 @@ const toast = useToast();
 
 const handleSubmit = async () => {
   const newJob = {
-    type: form.type,
+    job_type: form.type, // Send as job_type to match API expectations
     title: form.title,
     description: form.description,
     salary: form.salary,

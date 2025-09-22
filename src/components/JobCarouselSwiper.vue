@@ -39,7 +39,14 @@ onMounted(async () => {
     const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001";
     const response = await fetch(`${BASE_URL}/api/v1/jobs/`);
     const data = await response.json();
-    state.jobs = data;
+    
+    // Transform the data to match frontend expectations
+    const transformedJobs = data.map(job => ({
+      ...job,
+      type: job.job_type || job.type // Map job_type to type
+    }));
+    
+    state.jobs = transformedJobs;
     state.isLoading = false;
 
     // Ensure autoplay starts after data is loaded
@@ -50,6 +57,7 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error("Error fetching jobs:", error);
+    state.isLoading = false;
   } finally {
     state.isLoading = false;
   }
